@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistem Stok Barang Billy</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}
+body{background:#f5f5f5;color:#111}.navbar{height:65px;background:#000;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 30px;position:sticky;top:0;z-index:100}
+.logo{font-size:21px;font-weight:bold}.nav-menu{display:flex;gap:8px}.nav-menu button{border:0;background:transparent;color:#fff;padding:10px 15px;cursor:pointer;border-radius:5px;font-size:14px}.nav-menu button:hover,.nav-menu button.active{background:#fff;color:#000}
+.container{max-width:1250px;margin:auto;padding:30px}.page{display:none}.page.active{display:block}.page-title{margin-bottom:25px}.page-title h1{font-size:28px;margin-bottom:6px}.page-title p{color:#666}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-bottom:25px}.card,.panel,.form-panel,.table-panel{background:#fff;border:1px solid #ddd;border-radius:8px}.card{padding:22px;box-shadow:0 2px 5px rgba(0,0,0,.04)}.card-title{color:#666;font-size:14px;margin-bottom:10px}.card-value{font-size:30px;font-weight:bold}
+.dashboard-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}.panel{padding:22px}.panel h2{font-size:18px;margin-bottom:20px}.chart{height:250px;display:flex;align-items:flex-end;justify-content:center;gap:60px;border-bottom:1px solid #ddd;padding:20px}.bar-wrapper{height:100%;display:flex;align-items:flex-end}.bar{width:55px;background:#000;border-radius:5px 5px 0 0;min-height:5px;transition:.3s}.bar.out{background:#777}.bar-label{text-align:center;font-size:13px;margin-top:8px}.legend{display:flex;justify-content:center;gap:25px;margin-top:15px;font-size:13px}.legend span{display:flex;align-items:center;gap:7px}.legend-box{width:12px;height:12px;background:#000}.legend-box.out{background:#777}
+.stock-warning{display:flex;justify-content:space-between;padding:13px 0;border-bottom:1px solid #eee}.stock-warning:last-child{border-bottom:none}.low{font-weight:bold}
+.form-panel{padding:25px;margin-bottom:25px}.form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}.form-group{display:flex;flex-direction:column;gap:7px}.form-group.full{grid-column:1/-1}label{font-size:14px;font-weight:bold}
+input,select,textarea{width:100%;padding:11px 12px;border:1px solid #ccc;border-radius:5px;outline:none;font-size:14px;background:#fff}input:focus,select:focus,textarea:focus{border-color:#000}textarea{min-height:90px;resize:vertical}.button-group{margin-top:20px;display:flex;gap:10px}.btn{border:0;padding:11px 18px;border-radius:5px;cursor:pointer;font-weight:bold}.btn-black{background:#000;color:#fff}.btn-black:hover{background:#333}.btn-gray{background:#ddd;color:#111}.btn-danger{background:#333;color:#fff}
+.table-panel{overflow-x:auto}.table-header{padding:20px;border-bottom:1px solid #ddd;display:flex;justify-content:space-between;align-items:center;gap:15px}.table-header h2{font-size:18px}.search{max-width:280px}table{width:100%;border-collapse:collapse}th,td{padding:14px 16px;text-align:left;border-bottom:1px solid #eee;font-size:14px}th{background:#fafafa;font-weight:bold}tr:hover{background:#fafafa}.action-buttons{display:flex;gap:6px}.btn-small{padding:7px 10px;font-size:12px;border:0;border-radius:4px;cursor:pointer}.empty{text-align:center;padding:30px;color:#777}.badge{display:inline-block;padding:5px 9px;border-radius:4px;font-size:12px;font-weight:bold}.badge-in{background:#000;color:#fff}.badge-out{background:#ddd;color:#000}
+@media(max-width:900px){.cards{grid-template-columns:repeat(2,1fr)}.dashboard-grid{grid-template-columns:1fr}}
+@media(max-width:650px){.navbar{height:auto;padding:15px;flex-direction:column;gap:12px}.nav-menu{width:100%;overflow-x:auto}.nav-menu button{white-space:nowrap}.container{padding:20px 15px}.cards{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.form-group.full{grid-column:auto}.table-header{flex-direction:column;align-items:stretch}.search{max-width:none}}
+</style>
+</head>
+<body>
+<nav class="navbar">
+<div class="logo">Sistem Stok Barang Billy</div>
+<div class="nav-menu">
+<button class="nav-btn active" onclick="bukaHalaman('dashboard',this)">Dashboard</button>
+<button class="nav-btn" onclick="bukaHalaman('barang',this)">Master Barang</button>
+<button class="nav-btn" onclick="bukaHalaman('masuk',this)">Barang Masuk</button>
+<button class="nav-btn" onclick="bukaHalaman('keluar',this)">Barang Keluar</button>
+<button class="nav-btn" onclick="bukaHalaman('riwayat',this)">Riwayat</button>
+</div>
+</nav>
+
+<main class="container">
+<section id="dashboard" class="page active">
+<div class="page-title"><h1>Dashboard</h1><p>Ringkasan kondisi stok barang saat ini.</p></div>
+<div class="cards">
+<div class="card"><div class="card-title">Total Jenis Barang</div><div class="card-value" id="totalBarang">0</div></div>
+<div class="card"><div class="card-title">Total Stok</div><div class="card-value" id="totalStok">0</div></div>
+<div class="card"><div class="card-title">Barang Masuk Bulan Ini</div><div class="card-value" id="totalMasuk">0</div></div>
+<div class="card"><div class="card-title">Barang Keluar Bulan Ini</div><div class="card-value" id="totalKeluar">0</div></div>
+</div>
+<div class="dashboard-grid">
+<div class="panel"><h2>Aktivitas Bulan Ini</h2><div class="chart">
+<div><div class="bar-wrapper"><div class="bar" id="barMasuk" style="height:10px"></div></div><div class="bar-label">Barang Masuk</div></div>
+<div><div class="bar-wrapper"><div class="bar out" id="barKeluar" style="height:10px"></div></div><div class="bar-label">Barang Keluar</div></div>
+</div><div class="legend"><span><i class="legend-box"></i>Masuk</span><span><i class="legend-box out"></i>Keluar</span></div></div>
+<div class="panel"><h2>Peringatan Stok Menipis</h2><div id="lowStockList"><div class="empty">Tidak ada barang dengan stok menipis.</div></div></div>
+</div>
+</section>
+
+<section id="barang" class="page">
+<div class="page-title"><h1>Master Barang</h1><p>Kelola data barang dan kategori.</p></div>
+<div class="form-panel"><h2 id="formBarangTitle">Tambah Barang</h2><br>
+<div class="form-grid">
+<div class="form-group"><label>Nama Barang</label><input id="namaBarang" placeholder="Contoh: Laptop"></div>
+<div class="form-group"><label>Kategori</label><select id="kategoriBarang"><option value="">Pilih kategori</option><option>Elektronik</option><option>Alat Tulis</option><option>Perabot</option><option>Lainnya</option></select></div>
+<div class="form-group"><label>Stok Awal</label><input type="number" id="stokBarang" min="0" placeholder="Contoh: 10"></div>
+<div class="form-group"><label>Batas Minimum Stok</label><input type="number" id="minimumStok" min="0" placeholder="Contoh: 5"></div>
+</div>
+<div class="button-group"><button class="btn btn-black" onclick="simpanBarang()">Simpan Barang</button><button class="btn btn-gray" onclick="resetFormBarang()">Reset</button></div>
+</div>
+<div class="table-panel"><div class="table-header"><h2>Daftar Barang</h2><input class="search" id="searchBarang" placeholder="Cari barang..." oninput="tampilkanBarang()"></div>
+<table><thead><tr><th>No</th><th>Nama Barang</th><th>Kategori</th><th>Stok</th><th>Minimum</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="tabelBarang"></tbody></table>
+</div>
+</section>
+
+<section id="masuk" class="page">
+<div class="page-title"><h1>Barang Masuk</h1><p>Mencatat penambahan stok dari supplier atau barang baru.</p></div>
+<div class="form-panel"><h2>Tambah Transaksi Barang Masuk</h2><br><div class="form-grid">
+<div class="form-group"><label>Barang</label><select id="barangMasuk"></select></div>
+<div class="form-group"><label>Jumlah</label><input type="number" id="jumlahMasuk" min="1" placeholder="Jumlah barang"></div>
+<div class="form-group"><label>Tanggal</label><input type="date" id="tanggalMasuk"></div>
+<div class="form-group full"><label>Keterangan</label><textarea id="keteranganMasuk" placeholder="Contoh: Pengadaan dari supplier"></textarea></div>
+</div><div class="button-group"><button class="btn btn-black" onclick="simpanBarangMasuk()">Simpan Transaksi</button></div></div>
+</section>
+
+<section id="keluar" class="page">
+<div class="page-title"><h1>Barang Keluar</h1><p>Mencatat barang yang dipinjam, digunakan, atau rusak.</p></div>
+<div class="form-panel"><h2>Tambah Transaksi Barang Keluar</h2><br><div class="form-grid">
+<div class="form-group"><label>Barang</label><select id="barangKeluar"></select></div>
+<div class="form-group"><label>Jumlah</label><input type="number" id="jumlahKeluar" min="1" placeholder="Jumlah barang"></div>
+<div class="form-group"><label>Tanggal</label><input type="date" id="tanggalKeluar"></div>
+<div class="form-group full"><label>Keterangan</label><textarea id="keteranganKeluar" placeholder="Contoh: Barang digunakan untuk kegiatan"></textarea></div>
+</div><div class="button-group"><button class="btn btn-black" onclick="simpanBarangKeluar()">Simpan Transaksi</button></div></div>
+</section>
+
+<section id="riwayat" class="page">
+<div class="page-title"><h1>Riwayat Transaksi</h1><p>Daftar seluruh transaksi barang masuk dan keluar.</p></div>
+<div class="table-panel"><div class="table-header"><h2>Riwayat Transaksi</h2><input class="search" id="searchRiwayat" placeholder="Cari transaksi..." oninput="tampilkanRiwayat()"></div>
+<table><thead><tr><th>No</th><th>Tanggal</th><th>Barang</th><th>Jenis</th><th>Jumlah</th><th>Keterangan</th></tr></thead><tbody id="tabelRiwayat"></tbody></table>
+</div>
+</section>
+</main>
+
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+import{getFirestore,collection,addDoc,getDocs,doc,updateDoc,deleteDoc,runTransaction}from"https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+
+const firebaseConfig={
+apiKey:"AIzaSyCYy7Ox_LMHw8w3PP6_nlQYprYQyB8Co98",
+authDomain:"stokbarang-c944a.firebaseapp.com",
+projectId:"stokbarang-c944a",
+storageBucket:"stokbarang-c944a.firebasestorage.app",
+messagingSenderId:"442319169007",
+appId:"1:442319169007:web:04d2502f89aabae400821a",
+measurementId:"G-24G6LQJDR9"
+};
+const app=initializeApp(firebaseConfig),db=getFirestore(app);
+let daftarBarang=[],daftarTransaksi=[],editId=null;
+
+window.bukaHalaman=(id,tombol)=>{
+document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+document.getElementById(id).classList.add("active");
+document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
+tombol.classList.add("active");
+if(id==="barang")tampilkanBarang();
+if(id==="masuk"||id==="keluar")isiPilihanBarang();
+if(id==="riwayat")tampilkanRiwayat();
+if(id==="dashboard")tampilkanDashboard();
+};
+
+async function loadBarang(){
+try{
+const s=await getDocs(collection(db,"barang"));
+daftarBarang=[];s.forEach(d=>daftarBarang.push({id:d.id,...d.data()}));
+tampilkanBarang();isiPilihanBarang();tampilkanDashboard();
+}catch(e){console.error(e);alert("Gagal mengambil data barang.");}
+}
+async function loadTransaksi(){
+try{
+const s=await getDocs(collection(db,"transaksi"));
+daftarTransaksi=[];s.forEach(d=>daftarTransaksi.push({id:d.id,...d.data()}));
+daftarTransaksi.sort((a,b)=>String(b.tanggal).localeCompare(String(a.tanggal)));
+tampilkanDashboard();tampilkanRiwayat();
+}catch(e){console.error(e);alert("Gagal mengambil data transaksi.");}
+}
+
+window.simpanBarang=async()=>{
+const nama=document.getElementById("namaBarang").value.trim(),kategori=document.getElementById("kategoriBarang").value,stok=Number(document.getElementById("stokBarang").value),minimum=Number(document.getElementById("minimumStok").value);
+if(!nama||!kategori||stok<0||minimum<0)return alert("Tolong isi data barang dengan benar.");
+try{
+if(editId)await updateDoc(doc(db,"barang",editId),{nama,kategori,minimum}),alert("Data barang berhasil diperbarui.");
+else await addDoc(collection(db,"barang"),{nama,kategori,stok,minimum,createdAt:new Date().toISOString()}),alert("Barang berhasil ditambahkan.");
+resetFormBarang();await loadBarang();
+}catch(e){console.error(e);alert("Gagal menyimpan data barang.");}
+};
+window.editBarang=id=>{
+const b=daftarBarang.find(x=>x.id===id);if(!b)return;
+editId=id;namaBarang.value=b.nama||"";kategoriBarang.value=b.kategori||"";stokBarang.value=b.stok||0;minimumStok.value=b.minimum||0;formBarangTitle.textContent="Edit Barang";scrollTo({top:0,behavior:"smooth"});
+};
+window.hapusBarang=async id=>{
+const b=daftarBarang.find(x=>x.id===id);if(!b)return;
+if(b.stok>0)return alert("Barang tidak dapat dihapus karena stok masih tersedia.");
+if(!confirm("Apakah Anda yakin ingin menghapus barang ini?"))return;
+try{await deleteDoc(doc(db,"barang",id));alert("Barang berhasil dihapus.");await loadBarang()}catch(e){console.error(e);alert("Gagal menghapus barang.")}
+};
+window.resetFormBarang=()=>{editId=null;namaBarang.value="";kategoriBarang.value="";stokBarang.value="";minimumStok.value="";formBarangTitle.textContent="Tambah Barang"};
+
+window.tampilkanBarang=()=>{
+const key=searchBarang.value.toLowerCase(),tbody=tabelBarang;
+const data=daftarBarang.filter(x=>String(x.nama||"").toLowerCase().includes(key)||String(x.kategori||"").toLowerCase().includes(key));
+tbody.innerHTML="";
+if(!data.length)return tbody.innerHTML='<tr><td colspan="7" class="empty">Belum ada data barang.</td></tr>';
+data.forEach((x,i)=>{const stok=Number(x.stok||0),min=Number(x.minimum||0);tbody.innerHTML+=`<tr><td>${i+1}</td><td>${escapeHTML(x.nama)}</td><td>${escapeHTML(x.kategori)}</td><td>${stok}</td><td>${min}</td><td>${stok<=min?"Stok Menipis":"Aman"}</td><td><div class="action-buttons"><button class="btn-small btn-black" onclick="editBarang('${x.id}')">Edit</button><button class="btn-small btn-danger" onclick="hapusBarang('${x.id}')">Hapus</button></div></td></tr>`});
+};
+function isiPilihanBarang(){
+const opt=daftarBarang.map(x=>`<option value="${x.id}">${escapeHTML(x.nama)} (Stok: ${Number(x.stok||0)})</option>`).join("");
+barangMasuk.innerHTML='<option value="">Pilih barang</option>'+opt;
+barangKeluar.innerHTML='<option value="">Pilih barang</option>'+opt;
+}
+
+window.simpanBarangMasuk=async()=>{
+const barangId=barangMasuk.value,jumlah=Number(jumlahMasuk.value),tanggal=tanggalMasuk.value,keterangan=keteranganMasuk.value.trim();
+if(!barangId||jumlah<=0||!tanggal)return alert("Tolong isi data transaksi dengan benar.");
+try{
+await runTransaction(db,async tx=>{
+const ref=doc(db,"barang",barangId),snap=await tx.get(ref);if(!snap.exists())throw Error("Barang tidak ditemukan.");
+const data=snap.data(),tr=doc(collection(db,"transaksi"));
+tx.update(ref,{stok:Number(data.stok||0)+jumlah});
+tx.set(tr,{barangId,barangNama:data.nama,jenis:"Masuk",jumlah,tanggal,keterangan,createdAt:new Date().toISOString()});
+});
+alert("Transaksi barang masuk berhasil.");jumlahMasuk.value="";tanggalMasuk.value="";keteranganMasuk.value="";await loadBarang();await loadTransaksi();
+}catch(e){console.error(e);alert(e.message||"Gagal menyimpan transaksi barang masuk.")}
+};
+
+window.simpanBarangKeluar=async()=>{
+const barangId=barangKeluar.value,jumlah=Number(jumlahKeluar.value),tanggal=tanggalKeluar.value,keterangan=keteranganKeluar.value.trim();
+if(!barangId||jumlah<=0||!tanggal)return alert("Tolong isi data transaksi dengan benar.");
+try{
+await runTransaction(db,async tx=>{
+const ref=doc(db,"barang",barangId),snap=await tx.get(ref);if(!snap.exists())throw Error("Barang tidak ditemukan.");
+const data=snap.data(),stok=Number(data.stok||0);if(jumlah>stok)throw Error("Stok barang tidak mencukupi.");
+const tr=doc(collection(db,"transaksi"));
+tx.update(ref,{stok:stok-jumlah});
+tx.set(tr,{barangId,barangNama:data.nama,jenis:"Keluar",jumlah,tanggal,keterangan,createdAt:new Date().toISOString()});
+});
+alert("Transaksi barang keluar berhasil.");jumlahKeluar.value="";tanggalKeluar.value="";keteranganKeluar.value="";await loadBarang();await loadTransaksi();
+}catch(e){console.error(e);alert(e.message||"Gagal menyimpan transaksi barang keluar.")}
+};
+
+window.tampilkanRiwayat=()=>{
+const key=searchRiwayat.value.toLowerCase(),tbody=tabelRiwayat;
+const data=daftarTransaksi.filter(x=>String(x.barangNama||"").toLowerCase().includes(key)||String(x.jenis||"").toLowerCase().includes(key)||String(x.keterangan||"").toLowerCase().includes(key));
+tbody.innerHTML="";
+if(!data.length)return tbody.innerHTML='<tr><td colspan="6" class="empty">Belum ada transaksi.</td></tr>';
+data.forEach((x,i)=>tbody.innerHTML+=`<tr><td>${i+1}</td><td>${x.tanggal||"-"}</td><td>${escapeHTML(x.barangNama||"-")}</td><td><span class="badge ${x.jenis==="Masuk"?"badge-in":"badge-out"}">${x.jenis}</span></td><td>${Number(x.jumlah||0)}</td><td>${escapeHTML(x.keterangan||"-")}</td></tr>`);
+};
+
+window.tampilkanDashboard=()=>{
+const totalBarang=daftarBarang.length,totalStok=daftarBarang.reduce((a,x)=>a+Number(x.stok||0),0),now=new Date(),month=now.getMonth(),year=now.getFullYear();
+let masuk=0,keluar=0;
+daftarTransaksi.forEach(x=>{if(!x.tanggal)return;const d=new Date(x.tanggal+"T00:00:00");if(d.getMonth()===month&&d.getFullYear()===year)x.jenis==="Masuk"?masuk+=Number(x.jumlah||0):keluar+=Number(x.jumlah||0)});
+totalBarangEl.textContent=totalBarang;totalStokEl.textContent=totalStok;
+totalMasukEl.textContent=masuk;totalKeluarEl.textContent=keluar;
+const max=Math.max(masuk,keluar,1);barMasuk.style.height=(masuk/max*180+5)+"px";barKeluar.style.height=(keluar/max*180+5)+"px";
+const low=daftarBarang.filter(x=>Number(x.stok||0)<=Number(x.minimum||0));
+lowStockList.innerHTML=low.length?low.map(x=>`<div class="stock-warning"><span>${escapeHTML(x.nama)}</span><span class="low">${Number(x.stok||0)} / minimum ${Number(x.minimum||0)}</span></div>`).join(""):'<div class="empty">Tidak ada barang dengan stok menipis.</div>';
+};
+const totalBarangEl=document.getElementById("totalBarang"),totalStokEl=document.getElementById("totalStok"),totalMasukEl=document.getElementById("totalMasuk"),totalKeluarEl=document.getElementById("totalKeluar");
+function escapeHTML(t){return String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;")}
+function setTanggalDefault(){const t=new Date().toISOString().split("T")[0];tanggalMasuk.value=t;tanggalKeluar.value=t}
+async function mulai(){setTanggalDefault();await loadBarang();await loadTransaksi()} mulai();
+</script>
+</body>
+</html>
